@@ -1,0 +1,25 @@
+import numpy as np
+
+# 参数设定
+alpha = 0.8       # 吸收率
+epsilon = 0.84    # 发射率
+h = 10            # 对流系数 (W/m²K)
+A = 1             # 面积 (m²)
+thickness = 0.005 # 厚度 (m)
+rho = 2500        # 密度 (kg/m³)
+c = 800           # 比热容 (J/(kg·K))
+m = rho * A * thickness  # 质量 (kg)
+
+# 初始条件
+T_glass_initial = T_air[0]  # 初始温度设为第一小时的空气温度
+
+# 时间步进
+T_glass = np.zeros(len(T_air))
+T_glass[0] = T_glass_initial
+
+for i in range(1, len(T_air)):
+    Q_solar = alpha * I[i] * A
+    Q_rad = epsilon * 5.67e-8 * A * (T_air[i]**4 - T_glass[i-1]**4)
+    Q_conv = h * A * (T_glass[i-1] - T_air[i])
+    dT_dt = (Q_solar + Q_rad - Q_conv) / (m * c)
+    T_glass[i] = T_glass[i-1] + dT_dt * 3600  # 时间步长1小时=3600秒
