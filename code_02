@@ -1,0 +1,43 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load data from CSV
+file_path = "London_TRY.csv"
+data = pd.read_csv(file_path, skiprows=32)  # Skip first 32 rows to align with row 33
+
+# Extract relevant columns
+T_air = data.iloc[:, 6].values  # Column 7 (0-based index is 6)
+I = data.iloc[:, 12].values  # Column 13 (0-based index is 12)
+
+# Parameters
+alpha = 0.8       # Absorptivity
+epsilon = 0.84    # Emissivity
+h = 10            # Convective heat transfer coefficient (W/m²K)
+A = 1             # Surface area (m²)
+thickness = 0.005 # Thickness (m)
+rho = 2500        # Density (kg/m³)
+c = 800           # Specific heat capacity (J/(kg·K))
+m = rho * A * thickness  # Mass (kg)
+
+# Initial conditions
+T_glass = np.zeros(len(T_air))
+T_glass[0] = T_air[0]  # Initial temperature set to the first air temperature
+
+# Time stepping
+for i in range(1, len(T_air)):
+    Q_solar = alpha * I[i] * A
+    Q_rad = epsilon * 5.67e-8 * A * (T_air[i]**4 - T_glass[i-1]**4)
+    Q_conv = h * A * (T_glass[i-1] - T_air[i])
+    dT_dt = (Q_solar + Q_rad - Q_conv) / (m * c)
+    T_glass[i] = T_glass[i-1] + dT_dt * 3600  # Time step 1 hour = 3600 seconds
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.plot(T_glass, label="Glass Temperature (°C)", color='r')
+plt.xlabel("Time (hours)")
+plt.ylabel("Temperature (°C)")
+plt.title("Glass Temperature Over Time")
+plt.legend()
+plt.grid()
+plt.show()
